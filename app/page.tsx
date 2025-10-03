@@ -37,6 +37,22 @@ export default function Home() {
 
   const totalHours = entries.reduce((sum, entry) => sum + entry.hours, 0);
   const progressPercentage = Math.min((totalHours / TOTAL_REQUIRED) * 100, 100);
+  const hoursRemaining = Math.max(TOTAL_REQUIRED - totalHours, 0);
+
+  // Calculate hours per year for the two-year reporting period
+  const year1 = reportingYear - 1;
+  const year2 = reportingYear;
+  
+  const year1Hours = entries
+    .filter(entry => new Date(entry.date).getFullYear() === year1)
+    .reduce((sum, entry) => sum + entry.hours, 0);
+  
+  const year2Hours = entries
+    .filter(entry => new Date(entry.date).getFullYear() === year2)
+    .reduce((sum, entry) => sum + entry.hours, 0);
+
+  const year1NeedsMore = year1Hours < ANNUAL_MINIMUM;
+  const year2NeedsMore = year2Hours < ANNUAL_MINIMUM;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,6 +122,47 @@ export default function Home() {
                   <span className="text-white text-xs font-semibold">{progressPercentage.toFixed(0)}%</span>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Hours Remaining and Yearly Breakdown */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4 text-center">
+              <p className="text-sm text-gray-600 mb-1">Hours Remaining</p>
+              <p className="text-3xl font-bold text-green-600">{hoursRemaining}</p>
+              <p className="text-xs text-gray-500 mt-1">to reach {TOTAL_REQUIRED} hours</p>
+            </div>
+            
+            <div className={`border rounded-lg p-4 text-center ${
+              year1NeedsMore 
+                ? 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-300' 
+                : 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200'
+            }`}>
+              <p className="text-sm text-gray-600 mb-1">{year1} Hours</p>
+              <p className={`text-3xl font-bold ${
+                year1NeedsMore ? 'text-yellow-600' : 'text-blue-600'
+              }`}>{year1Hours}</p>
+              <p className={`text-xs mt-1 ${
+                year1NeedsMore ? 'text-yellow-700 font-medium' : 'text-gray-500'
+              }`}>
+                {year1NeedsMore ? `Need ${ANNUAL_MINIMUM - year1Hours} more` : `${ANNUAL_MINIMUM} min met ✓`}
+              </p>
+            </div>
+            
+            <div className={`border rounded-lg p-4 text-center ${
+              year2NeedsMore 
+                ? 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-300' 
+                : 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200'
+            }`}>
+              <p className="text-sm text-gray-600 mb-1">{year2} Hours</p>
+              <p className={`text-3xl font-bold ${
+                year2NeedsMore ? 'text-yellow-600' : 'text-blue-600'
+              }`}>{year2Hours}</p>
+              <p className={`text-xs mt-1 ${
+                year2NeedsMore ? 'text-yellow-700 font-medium' : 'text-gray-500'
+              }`}>
+                {year2NeedsMore ? `Need ${ANNUAL_MINIMUM - year2Hours} more` : `${ANNUAL_MINIMUM} min met ✓`}
+              </p>
             </div>
           </div>
 
