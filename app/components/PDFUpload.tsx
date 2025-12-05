@@ -130,9 +130,8 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       // Dynamic import of pdf.js to avoid SSR issues
       const pdfjsLib = await import('pdfjs-dist');
       
-      // Use Mozilla's official CDN (most reliable source)
-      const PDFJS_VERSION = '4.0.379'; // Match our package.json version
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.mjs`;
+      // Use the library's version to ensure compatibility
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
       // Read file as array buffer
       const arrayBuffer = await file.arrayBuffer();
