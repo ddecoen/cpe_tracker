@@ -29,6 +29,8 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Common date patterns
     const datePatterns = [
+      /Class Start Date\s+(\w+\s+\d{1,2},?\s+\d{4})/i, // Deloitte format: "Class Start Date December 4, 2025"
+      /Class End Date\s+(\w+\s+\d{1,2},?\s+\d{4})/i,   // Deloitte format
       /\b(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})\b/,
       /\b(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})\b/,
       /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4})\b/i,
@@ -37,6 +39,8 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Common hours patterns
     const hoursPatterns = [
+      /Participation CPE Credits\s+(\d+(?:\.\d+)?)/i, // Deloitte format
+      /CPE Credits\s+(\d+(?:\.\d+)?)/i,
       /(\d+(?:\.\d+)?)\s*(?:CPE\s*)?(?:credit|hour|hr)s?/i,
       /(?:credit|hour|hr)s?[:\s]+(\d+(?:\.\d+)?)/i,
       /(\d+(?:\.\d+)?)\s*(?:contact\s*)?hours?/i,
@@ -45,8 +49,8 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
     // Category keywords
     const categoryKeywords: { [key: string]: string[] } = {
       'Ethics': ['ethics', 'ethical', 'professional conduct', 'code of conduct'],
-      'Technical': ['technical', 'accounting', 'audit', 'tax', 'gaap', 'ifrs', 'financial reporting'],
-      'Professional Skills': ['communication', 'leadership', 'management', 'consulting'],
+      'Technical': ['technical', 'accounting', 'audit', 'tax', 'gaap', 'ifrs', 'financial reporting', 'information technology', 'ai', 'artificial intelligence', 'data', 'technology'],
+      'Professional Skills': ['communication', 'leadership', 'management', 'consulting', 'decision-making', 'enterprise'],
       'Business': ['business', 'strategy', 'marketing', 'finance', 'economics'],
     };
 
@@ -84,6 +88,7 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Extract description
     const descriptionPatterns = [
+      /FOR THE COURSE ENTITLED:\s*(.+?)(?:\n|DELIVERY METHOD)/i, // Deloitte format
       /(?:course|title|subject|program|topic)[:\s]+(.+?)(?:\n|$)/i,
       /certificate of completion[:\s]*\n*(.+?)(?:\n|$)/i,
       /(?:webinar|seminar|conference|training|workshop)[:\s]*(.+?)(?:\n|$)/i,
