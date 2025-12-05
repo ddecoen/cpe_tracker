@@ -139,10 +139,9 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       // Read file as array buffer
       const arrayBuffer = await file.arrayBuffer();
       
-      // Load PDF without worker
+      // Load PDF - the fake worker will cause it to fall back to main thread
       const pdf = await pdfjsLib.getDocument({ 
         data: arrayBuffer,
-        disableWorker: true,
       }).promise;
       
       // Extract text from all pages
