@@ -10,6 +10,7 @@ A web application to track Continuing Professional Education (CPE) requirements 
 
 ## Features
 
+- 📄 **PDF Upload**: Drag and drop or upload CPE certificate PDFs with automatic data extraction
 - ✅ Add and track CPE entries with date, hours, category, and description
 - 📊 Visual progress bar showing completion percentage
 - 💾 Data persisted in browser local storage
@@ -88,10 +89,18 @@ Alternatively, click the button below to deploy directly:
 
 ## Usage
 
-1. **Add CPE Entry**: Fill in the form with the date, hours, category, and description of your CPE activity
-2. **Track Progress**: View your total hours and progress toward the 80-hour requirement
-3. **Review History**: See all your CPE entries sorted by date
-4. **Delete Entries**: Remove individual entries or clear all data
+1. **Upload PDF Certificate**: 
+   - Drag and drop a CPE certificate PDF into the upload area, or click to browse
+   - The system will automatically extract: date, hours, category, and description
+   - Review and edit the auto-filled form data if needed
+   
+2. **Manual Entry**: Fill in the form with the date, hours, category, and description of your CPE activity
+
+3. **Track Progress**: View your total hours and progress toward the 80-hour requirement
+
+4. **Review History**: See all your CPE entries sorted by date
+
+5. **Delete Entries**: Remove individual entries or clear all data
 
 ## Data Storage
 

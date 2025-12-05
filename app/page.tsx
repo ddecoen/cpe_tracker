@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import PDFUpload from './components/PDFUpload';
 
 interface CPEEntry {
   id: string;
@@ -84,6 +85,14 @@ export default function Home() {
     }
   };
 
+  const handlePDFDataExtracted = (data: { date: string; hours: number; category: string; description: string }) => {
+    // Auto-fill the form with extracted data
+    setDate(data.date);
+    setHours(data.hours.toString());
+    setCategory(data.category);
+    setDescription(data.description);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -165,6 +174,8 @@ export default function Home() {
               </p>
             </div>
           </div>
+
+          <PDFUpload onDataExtracted={handlePDFDataExtracted} />
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
