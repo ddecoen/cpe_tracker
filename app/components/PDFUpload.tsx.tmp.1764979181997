@@ -89,6 +89,7 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Extract description
     const descriptionPatterns = [
+      /AI in action:\s*([^\.]+)/i, // Match "AI in action: How agentic AI is transforming..."
       /FOR THE COURSE ENTITLED:\s*(.+?)(?:\n|DELIVERY METHOD)/i, // Deloitte format
       /(?:course|title|subject|program|topic)[:\s]+(.+?)(?:\n|$)/i,
       /certificate of completion[:\s]*\n*(.+?)(?:\n|$)/i,
