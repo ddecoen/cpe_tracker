@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pdf from 'pdf-parse';
 
+// Force this route to use Node.js runtime (not Edge)
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 interface ExtractedData {
   date: string;
   hours: number;
