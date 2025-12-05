@@ -19,6 +19,103 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const extractCPEData = (text: string): ExtractedData | null => {
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    let date = '';
+    let hours = 0;
+    let category = 'Technical';
+    let description = '';
+
+    // Common date patterns
+    const datePatterns = [
+      /\b(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})\b/,
+      /\b(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})\b/,
+      /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4})\b/i,
+      /\b(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4})\b/i,
+    ];
+
+    // Common hours patterns
+    const hoursPatterns = [
+      /(\d+(?:\.\d+)?)\s*(?:CPE\s*)?(?:credit|hour|hr)s?/i,
+      /(?:credit|hour|hr)s?[:\s]+(\d+(?:\.\d+)?)/i,
+      /(\d+(?:\.\d+)?)\s*(?:contact\s*)?hours?/i,
+    ];
+
+    // Category keywords
+    const categoryKeywords: { [key: string]: string[] } = {
+      'Ethics': ['ethics', 'ethical', 'professional conduct', 'code of conduct'],
+      'Technical': ['technical', 'accounting', 'audit', 'tax', 'gaap', 'ifrs', 'financial reporting'],
+      'Professional Skills': ['communication', 'leadership', 'management', 'consulting'],
+      'Business': ['business', 'strategy', 'marketing', 'finance', 'economics'],
+    };
+
+    // Extract date
+    for (const pattern of datePatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        try {
+          const parsedDate = new Date(match[1]);
+          if (!isNaN(parsedDate.getTime())) {
+            date = parsedDate.toISOString().split('T')[0];
+            break;
+          }
+        } catch {}
+      }
+    }
+
+    // Extract hours
+    for (const pattern of hoursPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        hours = parseFloat(match[1]);
+        break;
+      }
+    }
+
+    // Extract category
+    const lowerText = text.toLowerCase();
+    for (const [cat, keywords] of Object.entries(categoryKeywords)) {
+      if (keywords.some(keyword => lowerText.includes(keyword))) {
+        category = cat;
+        break;
+      }
+    }
+
+    // Extract description
+    const descriptionPatterns = [
+      /(?:course|title|subject|program|topic)[:\s]+(.+?)(?:\n|$)/i,
+      /certificate of completion[:\s]*\n*(.+?)(?:\n|$)/i,
+      /(?:webinar|seminar|conference|training|workshop)[:\s]*(.+?)(?:\n|$)/i,
+    ];
+
+    for (const pattern of descriptionPatterns) {
+      const match = text.match(pattern);
+      if (match && match[1].trim().length > 5) {
+        description = match[1].trim();
+        break;
+      }
+    }
+
+    if (!description) {
+      for (const line of lines) {
+        if (line.length > 15 && 
+            !line.toLowerCase().includes('certificate') && 
+            !line.toLowerCase().includes('completion') &&
+            !datePatterns.some(p => p.test(line))) {
+          description = line.substring(0, 200);
+          break;
+        }
+      }
+    }
+
+    if (!date || hours === 0) {
+      return null;
+    }
+
+    return { date, hours, category, description: description || 'CPE Training' };
+  };
+
   const handleFile = async (file: File) => {
     if (file.type !== 'application/pdf') {
       setError('Please upload a PDF file');
@@ -30,21 +127,37 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
     setSuccess(false);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      // Dynamic import of pdf.js to avoid SSR issues
+      const pdfjsLib = await import('pdfjs-dist');
+      
+      // Set worker source
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
-      const response = await fetch('/api/extract-pdf', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to process PDF');
+      // Read file as array buffer
+      const arrayBuffer = await file.arrayBuffer();
+      
+      // Load PDF
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      
+      // Extract text from all pages
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(' ');
+        fullText += pageText + '\n';
       }
 
-      onDataExtracted(data);
+      // Extract CPE data
+      const extractedData = extractCPEData(fullText);
+      
+      if (!extractedData) {
+        throw new Error('Could not extract CPE data from PDF. Please enter manually.');
+      }
+
+      onDataExtracted(extractedData);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
