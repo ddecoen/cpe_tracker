@@ -130,18 +130,19 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       // Dynamic import of pdf.js to avoid SSR issues
       const pdfjsLib = await import('pdfjs-dist');
       
-      // Disable worker - use main thread instead (more reliable, works without external dependencies)
-      pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+      // Create a fake worker that delegates to the main thread
+      const fakeWorkerBlob = new Blob([
+        'self.onmessage = () => {};'
+      ], { type: 'application/javascript' });
+      pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(fakeWorkerBlob);
 
       // Read file as array buffer
       const arrayBuffer = await file.arrayBuffer();
       
-      // Load PDF - disable worker features
+      // Load PDF without worker
       const pdf = await pdfjsLib.getDocument({ 
         data: arrayBuffer,
-        useWorkerFetch: false,
-        isEvalSupported: false,
-        useSystemFonts: true,
+        disableWorker: true,
       }).promise;
       
       // Extract text from all pages
