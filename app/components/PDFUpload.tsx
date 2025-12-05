@@ -130,14 +130,19 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       // Dynamic import of pdf.js to avoid SSR issues
       const pdfjsLib = await import('pdfjs-dist');
       
-      // Use jsdelivr CDN which has better CORS support
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+      // Disable worker - use main thread instead (more reliable, works without external dependencies)
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
       // Read file as array buffer
       const arrayBuffer = await file.arrayBuffer();
       
-      // Load PDF
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      // Load PDF - disable worker features
+      const pdf = await pdfjsLib.getDocument({ 
+        data: arrayBuffer,
+        useWorkerFetch: false,
+        isEvalSupported: false,
+        useSystemFonts: true,
+      }).promise;
       
       // Extract text from all pages
       let fullText = '';
