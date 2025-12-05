@@ -130,8 +130,8 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       // Dynamic import of pdf.js to avoid SSR issues
       const pdfjsLib = await import('pdfjs-dist');
       
-      // Set worker source - use unpkg instead of cdnjs for better reliability
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+      // Use jsdelivr CDN which has better CORS support
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
 
       // Read file as array buffer
       const arrayBuffer = await file.arrayBuffer();
