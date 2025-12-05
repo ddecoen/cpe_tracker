@@ -161,6 +161,8 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       const extractedData = extractCPEData(fullText);
       
       if (!extractedData) {
+        // Log first 500 characters for debugging
+        console.log('Extracted text preview:', fullText.substring(0, 500));
         throw new Error('Could not extract CPE data from PDF. Please enter manually.');
       }
 
