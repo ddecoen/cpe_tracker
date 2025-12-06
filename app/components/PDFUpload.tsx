@@ -41,10 +41,11 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Common hours patterns
     const hoursPatterns = [
-      /CPE Hours Issued:\s+(\d+)/i, // CPA Academy format: "CPE Hours Issued: 2"
+      /CPE Hours Issued:\s+\w+\s+\w+\s+\w+\s+\w+\s+\w+\s+\w+\s+\w+\s+(\d+)/i, // CPA Academy: skip to number after "Date Completed:"
       /IRS CE Credits:\s+(\d+)/i, // CPA Academy alternative
       /Participation CPE Credits\s+(\d+(?:\.\d+)?)/i, // Deloitte format
       /CPE Credits\s+(\d+(?:\.\d+)?)/i,
+      /(\d+(?:\.\d+)?)\s*-\s*\w+\s*\(/i, // "2 - Ethics (Regulatory)"
       /(\d+(?:\.\d+)?)\s*(?:CPE\s*)?(?:credit|hour|hr)s?/i,
       /(?:credit|hour|hr)s?[:\s]+(\d+(?:\.\d+)?)/i,
       /(\d+(?:\.\d+)?)\s*(?:contact\s*)?hours?/i,
@@ -122,7 +123,7 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Extract description - try multiple approaches
     const descriptionPatterns = [
-      /Course Title:\s+(.+?)(?:\s+Location:|\s+Method|\s+Course ID|$)/i, // CPA Academy format
+      /Course Title:\s+([A-Z][^a-z]+?)(?:\s+Location:|\s+Online|\s+Method)/i, // CPA Academy format - capture ALL CAPS title
       // Deloitte single-line format: "...random_id Private company capital markets..."
       /[A-Za-z0-9]{20,}\s+(.+)/i,
       // Deloitte multiline format
