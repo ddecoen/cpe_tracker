@@ -78,19 +78,41 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       }
     }
 
-    // Extract category
-    const lowerText = text.toLowerCase();
-    for (const [cat, keywords] of Object.entries(categoryKeywords)) {
-      if (keywords.some(keyword => lowerText.includes(keyword))) {
-        category = cat;
-        break;
+    // Extract category - first try to find CPE Subject Area
+    const subjectAreaMatch = text.match(/CPE Subject Area\s+(.+?)(?:\s+Participation|\s+Class|\s+\d|$)/i);
+    if (subjectAreaMatch) {
+      const subjectArea = subjectAreaMatch[1].trim().toLowerCase();
+      
+      // Map CPE Subject Areas to categories
+      if (subjectArea.includes('ethics') || subjectArea.includes('professional conduct')) {
+        category = 'Ethics';
+      } else if (subjectArea.includes('information technology') || subjectArea.includes('technical') || subjectArea.includes('accounting')) {
+        category = 'Technical';
+      } else if (subjectArea.includes('specialized knowledge')) {
+        category = 'Business';
+      } else if (subjectArea.includes('behavioral') || subjectArea.includes('communication') || subjectArea.includes('personal development')) {
+        category = 'Professional Skills';
+      } else {
+        category = 'Other';
+      }
+    } else {
+      // Fallback to keyword matching if no CPE Subject Area found
+      const lowerText = text.toLowerCase();
+      for (const [cat, keywords] of Object.entries(categoryKeywords)) {
+        if (keywords.some(keyword => lowerText.includes(keyword))) {
+          category = cat;
+          break;
+        }
       }
     }
 
-    // Extract description
+    // Extract description - try multiple approaches
     const descriptionPatterns = [
-      /AI in action:\s*([^\.]+)/i, // Match "AI in action: How agentic AI is transforming..."
-      /FOR THE COURSE ENTITLED:\s*(.+?)(?:\n|DELIVERY METHOD)/i, // Deloitte format
+      // Deloitte single-line format: "...random_id Private company capital markets..."
+      /[A-Za-z0-9]{20,}\s+(.+)/i,
+      // Deloitte multiline format
+      /FOR THE COURSE ENTITLED:\s*(.+?)(?:\s+DELIVERY METHOD|\s+Virtual|\s+Class)/i,
+      /AI in action:\s*(.+?)(?:\s+DELIVERY METHOD|\s+Virtual|\s+Class)/i,
       /(?:course|title|subject|program|topic)[:\s]+(.+?)(?:\n|$)/i,
       /certificate of completion[:\s]*\n*(.+?)(?:\n|$)/i,
       /(?:webinar|seminar|conference|training|workshop)[:\s]*(.+?)(?:\n|$)/i,
@@ -98,17 +120,20 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     for (const pattern of descriptionPatterns) {
       const match = text.match(pattern);
-      if (match && match[1].trim().length > 5) {
+      if (match && match[1].trim().length > 10) {
         description = match[1].trim();
         break;
       }
     }
 
+    // Fallback to finding long meaningful lines
     if (!description) {
       for (const line of lines) {
-        if (line.length > 15 && 
+        if (line.length > 30 && 
             !line.toLowerCase().includes('certificate') && 
             !line.toLowerCase().includes('completion') &&
+            !line.toLowerCase().includes('deloitte') &&
+            !line.toLowerCase().includes('presented to') &&
             !datePatterns.some(p => p.test(line))) {
           description = line.substring(0, 200);
           break;
