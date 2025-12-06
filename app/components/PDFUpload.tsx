@@ -41,7 +41,7 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Common hours patterns
     const hoursPatterns = [
-      /CPE Hours Issued:\s+\w+\s+\w+\s+\w+\s+\w+\s+\w+\s+\w+\s+\w+\s+(\d+)/i, // CPA Academy: skip to number after "Date Completed:"
+      /a0DQh000004ZrjyMAC\s+(\d+)\s+-\s+Ethics/i, // CPA Academy specific: "a0DQh000004ZrjyMAC 2 - Ethics (Regulatory)"
       /IRS CE Credits:\s+(\d+)/i, // CPA Academy alternative
       /Participation CPE Credits\s+(\d+(?:\.\d+)?)/i, // Deloitte format
       /CPE Credits\s+(\d+(?:\.\d+)?)/i,
@@ -123,6 +123,7 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Extract description - try multiple approaches
     const descriptionPatterns = [
+      /Dan deCoen\s+([A-Z][A-Z\s:]+?)(?:\s+Online|\s+Group)/i, // CPA Academy: "Dan deCoen ETHICS: PRACTICAL APPLICATIONS..."
       /Course Title:\s+([A-Z][^a-z]+?)(?:\s+Location:|\s+Online|\s+Method)/i, // CPA Academy format - capture ALL CAPS title
       // Deloitte single-line format: "...random_id Private company capital markets..."
       /[A-Za-z0-9]{20,}\s+(.+)/i,
