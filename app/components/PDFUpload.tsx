@@ -89,7 +89,10 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Extract description - try multiple approaches
     const descriptionPatterns = [
-      /FOR THE COURSE ENTITLED:\s*(.+?)(?:\s+DELIVERY METHOD|\s+Virtual|\s+Class)/i, // Deloitte format
+      // Deloitte single-line format: "...random_id Private company capital markets..."
+      /[A-Za-z0-9]{20,}\s+(.+?)$/i,
+      // Deloitte multiline format
+      /FOR THE COURSE ENTITLED:\s*(.+?)(?:\s+DELIVERY METHOD|\s+Virtual|\s+Class)/i,
       /AI in action:\s*(.+?)(?:\s+DELIVERY METHOD|\s+Virtual|\s+Class)/i,
       /(?:course|title|subject|program|topic)[:\s]+(.+?)(?:\n|$)/i,
       /certificate of completion[:\s]*\n*(.+?)(?:\n|$)/i,
@@ -104,18 +107,10 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       }
     }
 
-    // If still no description, try to find course-related text between key phrases
-    if (!description) {
-      const courseMatch = text.match(/ENTITLED:\s*(.+?)(?:\s+DELIVERY|\s+Virtual|\s+Class Start)/i);
-      if (courseMatch) {
-        description = courseMatch[1].trim();
-      }
-    }
-
     // Fallback to finding long meaningful lines
     if (!description) {
       for (const line of lines) {
-        if (line.length > 20 && 
+        if (line.length > 30 && 
             !line.toLowerCase().includes('certificate') && 
             !line.toLowerCase().includes('completion') &&
             !line.toLowerCase().includes('deloitte') &&
