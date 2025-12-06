@@ -78,12 +78,31 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       }
     }
 
-    // Extract category
-    const lowerText = text.toLowerCase();
-    for (const [cat, keywords] of Object.entries(categoryKeywords)) {
-      if (keywords.some(keyword => lowerText.includes(keyword))) {
-        category = cat;
-        break;
+    // Extract category - first try to find CPE Subject Area
+    const subjectAreaMatch = text.match(/CPE Subject Area\s+(.+?)(?:\s+Participation|\s+Class|\s+\d|$)/i);
+    if (subjectAreaMatch) {
+      const subjectArea = subjectAreaMatch[1].trim().toLowerCase();
+      
+      // Map CPE Subject Areas to categories
+      if (subjectArea.includes('ethics') || subjectArea.includes('professional conduct')) {
+        category = 'Ethics';
+      } else if (subjectArea.includes('information technology') || subjectArea.includes('technical') || subjectArea.includes('accounting')) {
+        category = 'Technical';
+      } else if (subjectArea.includes('specialized knowledge')) {
+        category = 'Business';
+      } else if (subjectArea.includes('behavioral') || subjectArea.includes('communication') || subjectArea.includes('personal development')) {
+        category = 'Professional Skills';
+      } else {
+        category = 'Other';
+      }
+    } else {
+      // Fallback to keyword matching if no CPE Subject Area found
+      const lowerText = text.toLowerCase();
+      for (const [cat, keywords] of Object.entries(categoryKeywords)) {
+        if (keywords.some(keyword => lowerText.includes(keyword))) {
+          category = cat;
+          break;
+        }
       }
     }
 
@@ -177,15 +196,11 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       }
 
       // Extract CPE data
-      console.log('Full extracted text:', fullText);
       const extractedData = extractCPEData(fullText);
       
       if (!extractedData) {
-        console.log('Failed to extract any data');
         throw new Error('Could not extract CPE data from PDF. Please enter manually.');
       }
-      
-      console.log('Successfully extracted:', extractedData);
 
       onDataExtracted(extractedData);
       setSuccess(true);
