@@ -87,10 +87,10 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       }
     }
 
-    // Extract description
+    // Extract description - try multiple approaches
     const descriptionPatterns = [
-      /AI in action:\s*(.+?)(?:\s+DELIVERY METHOD|\s+Virtual|\s+Class)/i, // Match "AI in action: How agentic AI is transforming..."
-      /FOR THE COURSE ENTITLED:\s*(.+?)(?:\n|DELIVERY METHOD)/i, // Deloitte format
+      /FOR THE COURSE ENTITLED:\s*(.+?)(?:\s+DELIVERY METHOD|\s+Virtual|\s+Class)/i, // Deloitte format
+      /AI in action:\s*(.+?)(?:\s+DELIVERY METHOD|\s+Virtual|\s+Class)/i,
       /(?:course|title|subject|program|topic)[:\s]+(.+?)(?:\n|$)/i,
       /certificate of completion[:\s]*\n*(.+?)(?:\n|$)/i,
       /(?:webinar|seminar|conference|training|workshop)[:\s]*(.+?)(?:\n|$)/i,
@@ -98,17 +98,28 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     for (const pattern of descriptionPatterns) {
       const match = text.match(pattern);
-      if (match && match[1].trim().length > 5) {
+      if (match && match[1].trim().length > 10) {
         description = match[1].trim();
         break;
       }
     }
 
+    // If still no description, try to find course-related text between key phrases
+    if (!description) {
+      const courseMatch = text.match(/ENTITLED:\s*(.+?)(?:\s+DELIVERY|\s+Virtual|\s+Class Start)/i);
+      if (courseMatch) {
+        description = courseMatch[1].trim();
+      }
+    }
+
+    // Fallback to finding long meaningful lines
     if (!description) {
       for (const line of lines) {
-        if (line.length > 15 && 
+        if (line.length > 20 && 
             !line.toLowerCase().includes('certificate') && 
             !line.toLowerCase().includes('completion') &&
+            !line.toLowerCase().includes('deloitte') &&
+            !line.toLowerCase().includes('presented to') &&
             !datePatterns.some(p => p.test(line))) {
           description = line.substring(0, 200);
           break;
@@ -171,10 +182,10 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       }
 
       // Extract CPE data
+      console.log('Full extracted text:', fullText);
       const extractedData = extractCPEData(fullText);
       
       if (!extractedData) {
-        console.log('Extracted text preview:', fullText.substring(0, 1000));
         console.log('Failed to extract any data');
         throw new Error('Could not extract CPE data from PDF. Please enter manually.');
       }
