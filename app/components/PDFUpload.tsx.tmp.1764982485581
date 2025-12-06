@@ -213,14 +213,11 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       }
 
       // Extract CPE data
-      console.log('Full extracted text:', fullText);
       const extractedData = extractCPEData(fullText);
       
       if (!extractedData) {
         throw new Error('Could not extract CPE data from PDF. Please enter manually.');
       }
-      
-      console.log('Successfully extracted:', extractedData);
 
       onDataExtracted(extractedData);
       setSuccess(true);
