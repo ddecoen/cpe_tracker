@@ -90,7 +90,7 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
     // Extract description - try multiple approaches
     const descriptionPatterns = [
       // Deloitte single-line format: "...random_id Private company capital markets..."
-      /[A-Za-z0-9]{20,}\s+(.+?)$/i,
+      /[A-Za-z0-9]{20,}\s+(.+)/i,
       // Deloitte multiline format
       /FOR THE COURSE ENTITLED:\s*(.+?)(?:\s+DELIVERY METHOD|\s+Virtual|\s+Class)/i,
       /AI in action:\s*(.+?)(?:\s+DELIVERY METHOD|\s+Virtual|\s+Class)/i,
