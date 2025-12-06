@@ -89,6 +89,7 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Extract description
     const descriptionPatterns = [
+      /AI in action:\s*([^\.]+)/i, // Match "AI in action: How agentic AI is transforming..."
       /FOR THE COURSE ENTITLED:\s*(.+?)(?:\n|DELIVERY METHOD)/i, // Deloitte format
       /(?:course|title|subject|program|topic)[:\s]+(.+?)(?:\n|$)/i,
       /certificate of completion[:\s]*\n*(.+?)(?:\n|$)/i,
@@ -115,8 +116,19 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       }
     }
 
-    if (!date || hours === 0) {
+    // More lenient - if we have at least hours OR date, allow it
+    if (!date && hours === 0) {
       return null;
+    }
+
+    // Use today's date if we couldn't extract one
+    if (!date) {
+      date = new Date().toISOString().split('T')[0];
+    }
+
+    // Use 1 hour as default if we couldn't extract hours
+    if (hours === 0) {
+      hours = 1;
     }
 
     return { date, hours, category, description: description || 'CPE Training' };
@@ -162,10 +174,13 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       const extractedData = extractCPEData(fullText);
       
       if (!extractedData) {
-        // Log first 500 characters for debugging
-        console.log('Extracted text preview:', fullText.substring(0, 500));
+        // Log full text for debugging
+        console.log('Extracted text preview:', fullText.substring(0, 1000));
+        console.log('Failed to extract any data');
         throw new Error('Could not extract CPE data from PDF. Please enter manually.');
       }
+      
+      console.log('Successfully extracted:', extractedData);
 
       onDataExtracted(extractedData);
       setSuccess(true);
