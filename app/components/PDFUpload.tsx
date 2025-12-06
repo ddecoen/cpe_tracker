@@ -29,6 +29,7 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Common date patterns
     const datePatterns = [
+      /Date Completed:\s+(\w+\s+\d{1,2},?\s+\d{4})/i, // CPA Academy format: "Date Completed: November 26, 2025"
       /((?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4})/i, // "December 4, 2025"
       /Class Start Date\s+(\w+\s+\d{1,2},?\s+\d{4})/i, // Deloitte format: "Class Start Date December 4, 2025"
       /Class End Date\s+(\w+\s+\d{1,2},?\s+\d{4})/i,   // Deloitte format
@@ -40,6 +41,8 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Common hours patterns
     const hoursPatterns = [
+      /CPE Hours Issued:\s+(\d+)/i, // CPA Academy format: "CPE Hours Issued: 2"
+      /IRS CE Credits:\s+(\d+)/i, // CPA Academy alternative
       /Participation CPE Credits\s+(\d+(?:\.\d+)?)/i, // Deloitte format
       /CPE Credits\s+(\d+(?:\.\d+)?)/i,
       /(\d+(?:\.\d+)?)\s*(?:CPE\s*)?(?:credit|hour|hr)s?/i,
@@ -78,10 +81,21 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       }
     }
 
-    // Extract category - first try to find CPE Subject Area
-    const subjectAreaMatch = text.match(/CPE Subject Area\s+(.+?)(?:\s+Participation|\s+Class|\s+\d|$)/i);
-    if (subjectAreaMatch) {
-      const subjectArea = subjectAreaMatch[1].trim().toLowerCase();
+    // Extract category - first try to find CPE Subject Area or course title keywords
+    // CPA Academy includes category in hours field like "2 - Ethics (Regulatory)"
+    const hoursWithCategoryMatch = text.match(/CPE Hours Issued:\s+\d+\s*-\s*(\w+)/i);
+    let subjectArea = '';
+    
+    if (hoursWithCategoryMatch) {
+      subjectArea = hoursWithCategoryMatch[1].trim().toLowerCase();
+    } else {
+      const subjectAreaMatch = text.match(/CPE Subject Area\s+(.+?)(?:\s+Participation|\s+Class|\s+\d|$)/i);
+      if (subjectAreaMatch) {
+        subjectArea = subjectAreaMatch[1].trim().toLowerCase();
+      }
+    }
+    
+    if (subjectArea) {
       
       // Map CPE Subject Areas to categories
       if (subjectArea.includes('ethics') || subjectArea.includes('professional conduct')) {
@@ -108,6 +122,7 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Extract description - try multiple approaches
     const descriptionPatterns = [
+      /Course Title:\s+(.+?)(?:\s+Location:|\s+Method|\s+Course ID|$)/i, // CPA Academy format
       // Deloitte single-line format: "...random_id Private company capital markets..."
       /[A-Za-z0-9]{20,}\s+(.+)/i,
       // Deloitte multiline format
