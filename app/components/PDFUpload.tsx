@@ -83,16 +83,24 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
     }
 
     // Extract category - first try to find CPE Subject Area or course title keywords
-    // CPA Academy includes category in hours field like "2 - Ethics (Regulatory)"
-    const hoursWithCategoryMatch = text.match(/CPE Hours Issued:\s+\d+\s*-\s*(\w+)/i);
+    // Try multiple sources for category
     let subjectArea = '';
     
-    if (hoursWithCategoryMatch) {
-      subjectArea = hoursWithCategoryMatch[1].trim().toLowerCase();
-    } else {
-      const subjectAreaMatch = text.match(/CPE Subject Area\s+(.+?)(?:\s+Participation|\s+Class|\s+\d|$)/i);
-      if (subjectAreaMatch) {
-        subjectArea = subjectAreaMatch[1].trim().toLowerCase();
+    // FloQast Academy: "Field of Study: Accounting - Technical"
+    const fieldOfStudyMatch = text.match(/Field of Study:\s+(.+?)(?:\s+Recommended|\s+In accordance)/i);
+    if (fieldOfStudyMatch) {
+      subjectArea = fieldOfStudyMatch[1].trim().toLowerCase();
+    }
+    // CPA Academy includes category in hours field like "2 - Ethics (Regulatory)"
+    else {
+      const hoursWithCategoryMatch = text.match(/CPE Hours Issued:\s+\d+\s*-\s*(\w+)/i);
+      if (hoursWithCategoryMatch) {
+        subjectArea = hoursWithCategoryMatch[1].trim().toLowerCase();
+      } else {
+        const subjectAreaMatch = text.match(/CPE Subject Area\s+(.+?)(?:\s+Participation|\s+Class|\s+\d|$)/i);
+        if (subjectAreaMatch) {
+          subjectArea = subjectAreaMatch[1].trim().toLowerCase();
+        }
       }
     }
     
@@ -112,8 +120,14 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       }
     } else {
       // Fallback to keyword matching if no CPE Subject Area found
+      // Add reconciliation/excel keywords to Technical before checking
+      const updatedKeywords = {
+        ...categoryKeywords,
+        'Technical': [...categoryKeywords['Technical'], 'reconciliation', 'excel', 'automation']
+      };
+      
       const lowerText = text.toLowerCase();
-      for (const [cat, keywords] of Object.entries(categoryKeywords)) {
+      for (const [cat, keywords] of Object.entries(updatedKeywords)) {
         if (keywords.some(keyword => lowerText.includes(keyword))) {
           category = cat;
           break;
@@ -123,6 +137,7 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
 
     // Extract description - try multiple approaches
     const descriptionPatterns = [
+      /has completed\s+(.+?)(?:\s+Recommended Credits|\s+Delivery Method)/i, // FloQast Academy: "has completed Your Recs, Your Rules..."
       /Dan deCoen\s+([A-Z][A-Z\s:]+?)(?:\s+Online|\s+Group)/i, // CPA Academy: "Dan deCoen ETHICS: PRACTICAL APPLICATIONS..."
       /Course Title:\s+([A-Z][^a-z]+?)(?:\s+Location:|\s+Online|\s+Method)/i, // CPA Academy format - capture ALL CAPS title
       // Deloitte single-line format: "...random_id Private company capital markets..."
@@ -213,14 +228,11 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       }
 
       // Extract CPE data
-      console.log('Full extracted text:', fullText);
       const extractedData = extractCPEData(fullText);
       
       if (!extractedData) {
         throw new Error('Could not extract CPE data from PDF. Please enter manually.');
       }
-      
-      console.log('Successfully extracted:', extractedData);
 
       onDataExtracted(extractedData);
       setSuccess(true);
