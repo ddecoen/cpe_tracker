@@ -83,16 +83,24 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
     }
 
     // Extract category - first try to find CPE Subject Area or course title keywords
-    // CPA Academy includes category in hours field like "2 - Ethics (Regulatory)"
-    const hoursWithCategoryMatch = text.match(/CPE Hours Issued:\s+\d+\s*-\s*(\w+)/i);
+    // Try multiple sources for category
     let subjectArea = '';
     
-    if (hoursWithCategoryMatch) {
-      subjectArea = hoursWithCategoryMatch[1].trim().toLowerCase();
-    } else {
-      const subjectAreaMatch = text.match(/CPE Subject Area\s+(.+?)(?:\s+Participation|\s+Class|\s+\d|$)/i);
-      if (subjectAreaMatch) {
-        subjectArea = subjectAreaMatch[1].trim().toLowerCase();
+    // FloQast Academy: "Field of Study: Accounting - Technical"
+    const fieldOfStudyMatch = text.match(/Field of Study:\s+(.+?)(?:\s+Recommended|\s+In accordance)/i);
+    if (fieldOfStudyMatch) {
+      subjectArea = fieldOfStudyMatch[1].trim().toLowerCase();
+    }
+    // CPA Academy includes category in hours field like "2 - Ethics (Regulatory)"
+    else {
+      const hoursWithCategoryMatch = text.match(/CPE Hours Issued:\s+\d+\s*-\s*(\w+)/i);
+      if (hoursWithCategoryMatch) {
+        subjectArea = hoursWithCategoryMatch[1].trim().toLowerCase();
+      } else {
+        const subjectAreaMatch = text.match(/CPE Subject Area\s+(.+?)(?:\s+Participation|\s+Class|\s+\d|$)/i);
+        if (subjectAreaMatch) {
+          subjectArea = subjectAreaMatch[1].trim().toLowerCase();
+        }
       }
     }
     
