@@ -120,8 +120,14 @@ export default function PDFUpload({ onDataExtracted }: PDFUploadProps) {
       }
     } else {
       // Fallback to keyword matching if no CPE Subject Area found
+      // Add reconciliation/excel keywords to Technical before checking
+      const updatedKeywords = {
+        ...categoryKeywords,
+        'Technical': [...categoryKeywords['Technical'], 'reconciliation', 'excel', 'automation']
+      };
+      
       const lowerText = text.toLowerCase();
-      for (const [cat, keywords] of Object.entries(categoryKeywords)) {
+      for (const [cat, keywords] of Object.entries(updatedKeywords)) {
         if (keywords.some(keyword => lowerText.includes(keyword))) {
           category = cat;
           break;
